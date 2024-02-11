@@ -132,6 +132,7 @@ class VideoFrameBitmapExtractor {
         decodeMediaCodec?.release()
         mediaExtractor?.release()
         imageReader?.close()
+        inputSurface?.release()
     }
 
     /**

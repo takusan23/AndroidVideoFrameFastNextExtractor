@@ -15,6 +15,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -32,18 +33,26 @@ fun VideoFrameBitmapExtractorScreen() {
     val context = LocalContext.current
     val bitmap = remember { mutableStateOf<ImageBitmap?>(null) }
 
+    // フレームを取り出すやつと取り出した位置
+    val currentPositionMs = remember { mutableStateOf(0L) }
+    val videoFrameBitmapExtractor = remember { VideoFrameBitmapExtractor() }
+
     val videoPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia(),
         onResult = { uri ->
             uri ?: return@rememberLauncherForActivityResult
             scope.launch {
-                val videoFrameBitmapExtractor = VideoFrameBitmapExtractor()
                 videoFrameBitmapExtractor.prepareDecoder(context, uri)
-                bitmap.value = videoFrameBitmapExtractor.getVideoFrameBitmap(10_000).asImageBitmap()
-                videoFrameBitmapExtractor.destroy()
+                currentPositionMs.value = 1000
+                bitmap.value = videoFrameBitmapExtractor.getVideoFrameBitmap(currentPositionMs.value).asImageBitmap()
             }
         }
     )
+
+    // 破棄時
+    DisposableEffect(key1 = Unit) {
+        onDispose { videoFrameBitmapExtractor.destroy() }
+    }
 
     Scaffold(
         topBar = {
@@ -65,9 +74,18 @@ fun VideoFrameBitmapExtractorScreen() {
                 )
             }
 
-            Button(onClick = { videoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.VideoOnly)) }) {
-                Text(text = "取り出す")
-            }
+            Text(text = "currentPositionMs = ${currentPositionMs.value}")
+
+            Button(onClick = {
+                videoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.VideoOnly))
+            }) { Text(text = "取り出す") }
+
+            Button(onClick = {
+                scope.launch {
+                    currentPositionMs.value += 16
+                    bitmap.value = videoFrameBitmapExtractor.getVideoFrameBitmap(currentPositionMs.value).asImageBitmap()
+                }
+            }) { Text(text = "16ms 進める") }
 
         }
     }
