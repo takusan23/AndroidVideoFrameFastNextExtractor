@@ -15,6 +15,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -39,7 +40,8 @@ fun VideoFrameBitmapExtractorScreen() {
             scope.launch {
                 val videoFrameBitmapExtractor = VideoFrameBitmapExtractor()
                 videoFrameBitmapExtractor.prepareDecoder(context, uri)
-                bitmap.value = videoFrameBitmapExtractor.getVideoFrameBitmap(1_000).asImageBitmap()
+                bitmap.value = videoFrameBitmapExtractor.getVideoFrameBitmap(10_000).asImageBitmap()
+                videoFrameBitmapExtractor.destroy()
             }
         }
     )
