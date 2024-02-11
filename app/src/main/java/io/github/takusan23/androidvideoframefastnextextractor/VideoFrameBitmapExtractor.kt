@@ -8,6 +8,7 @@ import android.graphics.Rect
 import android.graphics.YuvImage
 import android.media.ImageReader
 import android.media.MediaCodec
+import android.media.MediaCodecInfo
 import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.net.Uri
@@ -65,7 +66,6 @@ class VideoFrameBitmapExtractor {
 
         // デコーダーの用意
         val mediaFormat = mediaExtractor.getTrackFormat(trackIndex)
-        println(mediaFormat)
         val codecName = mediaFormat.getString(MediaFormat.KEY_MIME)!!
         val videoHeight = mediaFormat.getInteger(MediaFormat.KEY_HEIGHT)
         val videoWidth = mediaFormat.getInteger(MediaFormat.KEY_WIDTH)
@@ -94,12 +94,7 @@ class VideoFrameBitmapExtractor {
             // 現在の再生位置よりも戻る方向に（巻き戻し）した場合
             seekToMs < prevSeekToMs -> {
                 awaitSeekToPrevDecode(seekToMs)
-                val bitmap: Bitmap
-                val time = measureTimeMillis {
-                    bitmap = getImageReaderBitmap()
-                }
-                println("time = $time")
-                bitmap
+                getImageReaderBitmap()
             }
 
             // シーク不要
@@ -112,12 +107,7 @@ class VideoFrameBitmapExtractor {
             else -> {
                 // 巻き戻しでも無く、フレームを取り出す必要がある
                 awaitSeekToNextDecode(seekToMs)
-                val bitmap: Bitmap
-                val time = measureTimeMillis {
-                    bitmap = getImageReaderBitmap()
-                }
-                println("time = $time")
-                bitmap
+                getImageReaderBitmap()
             }
         }
         prevSeekToMs = seekToMs
