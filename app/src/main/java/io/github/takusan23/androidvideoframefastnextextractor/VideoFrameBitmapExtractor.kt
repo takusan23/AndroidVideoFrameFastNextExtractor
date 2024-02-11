@@ -2,19 +2,12 @@ package io.github.takusan23.androidvideoframefastnextextractor
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.ImageFormat
 import android.graphics.PixelFormat
-import android.graphics.Rect
-import android.graphics.YuvImage
 import android.media.ImageReader
 import android.media.MediaCodec
-import android.media.MediaCodecInfo
 import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.net.Uri
-import android.os.Handler
-import android.os.Looper
 import io.github.takusan23.androidvideoframefastnextextractor.gl.InputSurface
 import io.github.takusan23.androidvideoframefastnextextractor.gl.TextureRenderer
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -22,10 +15,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.newSingleThreadContext
 import kotlinx.coroutines.withContext
-import java.io.ByteArrayOutputStream
-import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
-import kotlin.system.measureTimeMillis
 
 /**
  * [MediaCodec]と[MediaExtractor]、[ImageReader]を使って高速に動画からフレームを取り出す
