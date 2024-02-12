@@ -16,6 +16,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -24,7 +25,6 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import kotlin.system.measureTimeMillis
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,27 +33,24 @@ fun MediaMetadataRetrieverScreen() {
     val context = LocalContext.current
     val bitmap = remember { mutableStateOf<ImageBitmap?>(null) }
 
+    val currentPositionMs = remember { mutableStateOf(0L) }
+    val mediaMetadataRetriever = remember { MediaMetadataRetriever() }
+
     val videoPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia(),
         onResult = { uri ->
             // MediaMetadataRetriever は File からも作れます
             uri ?: return@rememberLauncherForActivityResult
-
-            val time = measureTimeMillis {
-                val mediaMetadataRetriever = MediaMetadataRetriever().apply {
-                    setDataSource(context, uri)
-                }
-                // Bitmap を取り出す
-                // 引数の単位は Ms ではなく Us です
-                mediaMetadataRetriever.getFrameAtTime(1_000_000L, MediaMetadataRetriever.OPTION_CLOSEST)?.asImageBitmap()
-                mediaMetadataRetriever.getFrameAtTime(1_100_000L, MediaMetadataRetriever.OPTION_CLOSEST)?.asImageBitmap()
-                mediaMetadataRetriever.getFrameAtTime(1_200_000L, MediaMetadataRetriever.OPTION_CLOSEST)?.asImageBitmap()
-                // もう使わないなら
-                mediaMetadataRetriever.release()
-            }
-            println("time = $time ms")
+            mediaMetadataRetriever.setDataSource(context, uri)
+            currentPositionMs.value += 1000
+            bitmap.value = mediaMetadataRetriever.getFrameAtTime(currentPositionMs.value)?.asImageBitmap()
         }
     )
+
+    // 破棄時
+    DisposableEffect(key1 = Unit) {
+        onDispose { mediaMetadataRetriever.release() }
+    }
 
     Scaffold(
         topBar = {
