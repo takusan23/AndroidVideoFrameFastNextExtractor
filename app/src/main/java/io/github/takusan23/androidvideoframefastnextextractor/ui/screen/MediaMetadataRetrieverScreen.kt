@@ -23,6 +23,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 
+/** [MediaMetadataRetriever]で動画からフレームを取り出す */
 @Composable
 fun MediaMetadataRetrieverScreen() {
     val scope = rememberCoroutineScope()

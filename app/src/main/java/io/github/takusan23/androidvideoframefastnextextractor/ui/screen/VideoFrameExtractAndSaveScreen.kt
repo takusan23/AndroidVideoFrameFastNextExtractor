@@ -1,6 +1,7 @@
 package io.github.takusan23.androidvideoframefastnextextractor.ui.screen
 
 import android.graphics.Bitmap
+import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.os.Environment
 import android.provider.MediaStore
@@ -19,8 +20,8 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -35,14 +36,17 @@ import coil.compose.AsyncImage
 import io.github.takusan23.androidvideoframefastnextextractor.VideoFrameBitmapExtractor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.system.measureTimeMillis
 
 /**
+ * @param isUseVideoFrameBitmapExtractor 自前で作った[VideoFrameBitmapExtractor]を使って取り出す場合は true。[MediaMetadataRetriever]を使う場合は false。
  * @param startMs フレームの取り出しを開始する位置
  * @param stopMs フレームの取り出しを終了する位置
  * @param frameRate フレームレート。1fpsなら1秒に1枚。30fpsなら1秒に30枚
  */
 private data class ExtractConfig(
+    val isUseVideoFrameBitmapExtractor: Boolean = true,
     val startMs: Long = 0,
     val stopMs: Long = 3_000,
     val frameRate: Int = 15
@@ -60,10 +64,9 @@ private data class ExtractResult(
     val extractFrameImageUriList: List<Uri>
 )
 
-/** 高速でフレームを取り出すサンプル。coil で画像をロードしているので、依存関係を追加してください。 */
-@OptIn(ExperimentalMaterial3Api::class)
+/** 実際に動画からフレームを連続して取り出して保存する。 */
 @Composable
-fun FastFrameExtractScreen() {
+fun VideoFrameExtractAndSaveScreen() {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
@@ -79,10 +82,32 @@ fun FastFrameExtractScreen() {
 
     /** 取り出す処理 */
     fun startExtract() {
+
+        /** [Bitmap]を写真フォルダに保存する。 */
+        suspend fun Bitmap.saveToPictureFolder(
+            relativePath: String,
+            name: String
+        ): Uri = withContext(Dispatchers.IO) {
+            // 端末の写真フォルダにコピー
+            val contentValues = contentValuesOf(
+                MediaStore.MediaColumns.DISPLAY_NAME to name,
+                MediaStore.MediaColumns.MIME_TYPE to "image/png",
+                // 写真フォルダからの相対パス
+                // DCIM と Pictures って何が違うんや...
+                MediaStore.MediaColumns.RELATIVE_PATH to relativePath
+            )
+            // フレームを高速で取り出しても、保存処理で多分遅くなっちゃう
+            val insertUri = context.contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)!!
+            context.contentResolver.openOutputStream(insertUri)?.use { outputStream ->
+                compress(Bitmap.CompressFormat.PNG, 100, outputStream)
+            }
+            return@withContext insertUri
+        }
+
         scope.launch(Dispatchers.Default) {
 
             val uri = videoUri.value ?: return@launch
-            val (startMs, stopMs, frameRate) = extractConfig.value
+            val (isUseVideoFrameBitmapExtractor, startMs, stopMs, frameRate) = extractConfig.value
             val frameMs = 1_000L / frameRate
             val videoFramePositionMsList = (startMs until stopMs step frameMs)
 
@@ -94,28 +119,39 @@ fun FastFrameExtractScreen() {
             isProgress.value = true
 
             val totalTimeMs = measureTimeMillis {
-                VideoFrameBitmapExtractor().apply {
-                    prepareDecoder(context, uri)
-                    for (positionMs in videoFramePositionMsList) {
-                        // フレームを取り出す
-                        val bitmap = getVideoFrameBitmap(seekToMs = positionMs)
-                        // 端末の写真フォルダにコピー
-                        val contentValues = contentValuesOf(
-                            MediaStore.MediaColumns.DISPLAY_NAME to "VideoFrame_${positionMs}_ms.png",
-                            MediaStore.MediaColumns.MIME_TYPE to "image/png",
-                            // 写真フォルダからの相対パス
-                            // DCIM と Pictures って何が違うんや...
-                            MediaStore.MediaColumns.RELATIVE_PATH to mediaStoreRelativePath
-                        )
-                        // フレームを高速で取り出しても、保存処理が多分遅くなっちゃう
-                        val insertUri = context.contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)!!
-                        resultUriList += insertUri
-                        context.contentResolver.openOutputStream(insertUri)?.use { outputStream ->
-                            bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
+                if (isUseVideoFrameBitmapExtractor) {
+                    // 自前の VideoFrameBitmapExtractor を使う
+                    VideoFrameBitmapExtractor().apply {
+                        prepareDecoder(context, uri)
+                        for (positionMs in videoFramePositionMsList) {
+                            // フレームを取り出す
+                            val bitmap = getVideoFrameBitmap(seekToMs = positionMs)
+                            // 写真フォルダに保存する
+                            resultUriList += bitmap.saveToPictureFolder(
+                                relativePath = mediaStoreRelativePath,
+                                name = "VideoFrame_${positionMs}_ms.png"
+                            )
                         }
+                        destroy()
                     }
-                    destroy()
+                } else {
+                    // MediaMetadataRetriever を使う
+                    MediaMetadataRetriever().apply {
+                        setDataSource(context, uri)
+                        for (positionMs in videoFramePositionMsList) {
+                            // フレームを取り出す
+                            val bitmap = getFrameAtTime(positionMs * 1_000)!!
+                            // 写真フォルダに保存する
+                            resultUriList += bitmap.saveToPictureFolder(
+                                relativePath = mediaStoreRelativePath,
+                                name = "VideoFrame_${positionMs}_ms.png"
+                            )
+                        }
+                        release()
+                    }
                 }
+
+
             }
 
             isProgress.value = false
@@ -136,6 +172,7 @@ fun FastFrameExtractScreen() {
 
         item(span = { GridItemSpan(maxCurrentLineSpan) }, key = "input") {
             ExtractConfigInputUi(
+                modifier = Modifier.fillMaxWidth(),
                 extractConfig = extractConfig.value,
                 onUpdate = { extractConfig.value = it },
                 onVideoPickRequest = { videoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.VideoOnly)) },
@@ -195,6 +232,17 @@ private fun ExtractConfigInputUi(
 
         Button(onClick = onVideoPickRequest) {
             Text(text = "動画の選択")
+        }
+
+        Row {
+            Text(
+                modifier = Modifier.weight(1f),
+                text = "自前の高速で動く VideoFrameBitmapExtractor を利用する。OFF の場合は MediaMetadataRetriever を利用します。"
+            )
+            Switch(
+                checked = extractConfig.isUseVideoFrameBitmapExtractor,
+                onCheckedChange = { onUpdate(extractConfig.copy(isUseVideoFrameBitmapExtractor = it)) }
+            )
         }
 
         Row(

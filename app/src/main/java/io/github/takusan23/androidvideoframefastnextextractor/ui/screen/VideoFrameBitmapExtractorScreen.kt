@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -24,7 +23,7 @@ import androidx.compose.ui.unit.dp
 import io.github.takusan23.androidvideoframefastnextextractor.VideoFrameBitmapExtractor
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
+/** 自前で作った[VideoFrameBitmapExtractor]を使って動画からフレームを取り出す */
 @Composable
 fun VideoFrameBitmapExtractorScreen() {
     val scope = rememberCoroutineScope()

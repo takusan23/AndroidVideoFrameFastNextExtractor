@@ -20,9 +20,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import io.github.takusan23.androidvideoframefastnextextractor.ui.screen.BenchMarkScreen
-import io.github.takusan23.androidvideoframefastnextextractor.ui.screen.FastFrameExtractScreen
 import io.github.takusan23.androidvideoframefastnextextractor.ui.screen.MediaMetadataRetrieverScreen
 import io.github.takusan23.androidvideoframefastnextextractor.ui.screen.VideoFrameBitmapExtractorScreen
+import io.github.takusan23.androidvideoframefastnextextractor.ui.screen.VideoFrameExtractAndSaveScreen
 import io.github.takusan23.androidvideoframefastnextextractor.ui.theme.AndroidVideoFrameFastNextExtractorTheme
 
 class MainActivity : ComponentActivity() {
@@ -42,7 +42,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainScreen() {
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
-    val currentPage = remember { mutableStateOf(MainScreenPage.FastFrameExtractScreen) }
+    val currentPage = remember { mutableStateOf(MainScreenPage.VideoFrameExtractAndSaveScreen) }
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -73,7 +73,7 @@ fun MainScreen() {
                 MainScreenPage.VideoFrameBitmapExtractorScreen -> VideoFrameBitmapExtractorScreen()
                 MainScreenPage.MediaMetadataRetrieverScreen -> MediaMetadataRetrieverScreen()
                 MainScreenPage.BenchMarkScreen -> BenchMarkScreen()
-                MainScreenPage.FastFrameExtractScreen -> FastFrameExtractScreen()
+                MainScreenPage.VideoFrameExtractAndSaveScreen -> VideoFrameExtractAndSaveScreen()
             }
         }
     }
@@ -83,5 +83,5 @@ enum class MainScreenPage {
     VideoFrameBitmapExtractorScreen,
     MediaMetadataRetrieverScreen,
     BenchMarkScreen,
-    FastFrameExtractScreen
+    VideoFrameExtractAndSaveScreen
 }
