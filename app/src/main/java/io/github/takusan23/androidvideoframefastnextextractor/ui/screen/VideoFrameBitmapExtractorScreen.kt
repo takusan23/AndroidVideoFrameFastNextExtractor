@@ -1,4 +1,4 @@
-package io.github.takusan23.androidvideoframefastnextextractor
+package io.github.takusan23.androidvideoframefastnextextractor.ui.screen
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import io.github.takusan23.androidvideoframefastnextextractor.VideoFrameBitmapExtractor
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)

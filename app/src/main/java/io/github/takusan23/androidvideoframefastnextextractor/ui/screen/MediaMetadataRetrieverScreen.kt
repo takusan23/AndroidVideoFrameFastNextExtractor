@@ -1,4 +1,4 @@
-package io.github.takusan23.androidvideoframefastnextextractor
+package io.github.takusan23.androidvideoframefastnextextractor.ui.screen
 
 import android.media.MediaMetadataRetriever
 import androidx.activity.compose.rememberLauncherForActivityResult
