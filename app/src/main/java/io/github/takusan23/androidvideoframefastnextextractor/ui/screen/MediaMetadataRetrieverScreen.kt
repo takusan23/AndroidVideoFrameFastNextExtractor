@@ -9,12 +9,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.mutableStateOf
@@ -25,8 +21,8 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MediaMetadataRetrieverScreen() {
     val scope = rememberCoroutineScope()
@@ -42,8 +38,9 @@ fun MediaMetadataRetrieverScreen() {
             // MediaMetadataRetriever は File からも作れます
             uri ?: return@rememberLauncherForActivityResult
             mediaMetadataRetriever.setDataSource(context, uri)
-            currentPositionMs.value += 1000
-            bitmap.value = mediaMetadataRetriever.getFrameAtTime(currentPositionMs.value)?.asImageBitmap()
+            // 正確なフレームが欲しいので MediaMetadataRetriever.OPTION_CLOSEST
+            currentPositionMs.value = 1000
+            bitmap.value = mediaMetadataRetriever.getFrameAtTime(currentPositionMs.value * 1_000, MediaMetadataRetriever.OPTION_CLOSEST)?.asImageBitmap()
         }
     )
 
@@ -52,30 +49,31 @@ fun MediaMetadataRetrieverScreen() {
         onDispose { mediaMetadataRetriever.release() }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(title = { Text(text = "MediaMetadataRetrieverScreen") })
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+
+        if (bitmap.value != null) {
+            Image(
+                modifier = Modifier.fillMaxWidth(),
+                bitmap = bitmap.value!!,
+                contentDescription = null
+            )
         }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .padding(paddingValues)
-                .fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
 
-            if (bitmap.value != null) {
-                Image(
-                    modifier = Modifier.fillMaxWidth(),
-                    bitmap = bitmap.value!!,
-                    contentDescription = null
-                )
-            }
+        Text(text = "currentPositionMs = ${currentPositionMs.value}")
 
-            Button(onClick = { videoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.VideoOnly)) }) {
-                Text(text = "取り出す")
-            }
-
+        Button(onClick = { videoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.VideoOnly)) }) {
+            Text(text = "取り出す")
         }
+
+        Button(onClick = {
+            scope.launch {
+                currentPositionMs.value += 16
+                bitmap.value = mediaMetadataRetriever.getFrameAtTime(currentPositionMs.value * 1_000, MediaMetadataRetriever.OPTION_CLOSEST)?.asImageBitmap()
+            }
+        }) { Text(text = "16ms 進める") }
+
     }
 }

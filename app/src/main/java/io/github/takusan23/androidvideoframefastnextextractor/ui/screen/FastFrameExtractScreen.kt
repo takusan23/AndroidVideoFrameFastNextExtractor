@@ -11,8 +11,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -20,18 +20,14 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.contentValuesOf
@@ -71,7 +67,6 @@ fun FastFrameExtractScreen() {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     val videoUri = remember { mutableStateOf<Uri?>(null) }
     val extractConfig = remember { mutableStateOf(ExtractConfig()) }
     val extractResult = remember { mutableStateOf<ExtractResult?>(null) }
@@ -132,52 +127,42 @@ fun FastFrameExtractScreen() {
         }
     }
 
-    Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        topBar = {
-            LargeTopAppBar(
-                title = { Text(text = "FastFrameExtractScreen") },
-                scrollBehavior = scrollBehavior
+    LazyVerticalGrid(
+        modifier = Modifier.fillMaxSize(),
+        columns = GridCells.Fixed(3),
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp)
+    ) {
+
+        item(span = { GridItemSpan(maxCurrentLineSpan) }, key = "input") {
+            ExtractConfigInputUi(
+                extractConfig = extractConfig.value,
+                onUpdate = { extractConfig.value = it },
+                onVideoPickRequest = { videoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.VideoOnly)) },
+                onStartClick = { startExtract() }
             )
         }
-    ) { paddingValues ->
-        LazyVerticalGrid(
-            modifier = Modifier.padding(paddingValues),
-            columns = GridCells.Fixed(3),
-            horizontalArrangement = Arrangement.spacedBy(2.dp),
-            verticalArrangement = Arrangement.spacedBy(2.dp)
-        ) {
 
-            item(span = { GridItemSpan(maxCurrentLineSpan) }, key = "input") {
-                ExtractConfigInputUi(
-                    extractConfig = extractConfig.value,
-                    onUpdate = { extractConfig.value = it },
-                    onVideoPickRequest = { videoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.VideoOnly)) },
-                    onStartClick = { startExtract() }
-                )
-            }
-
-            if (isProgress.value) {
-                item(span = { GridItemSpan(maxCurrentLineSpan) }, key = "progress") {
-                    Box(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
+        if (isProgress.value) {
+            item(span = { GridItemSpan(maxCurrentLineSpan) }, key = "progress") {
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
                 }
             }
+        }
 
-            if (extractResult.value != null) {
-                item(span = { GridItemSpan(maxCurrentLineSpan) }, key = "output") {
-                    ExtractResultUi(extractResult = extractResult.value!!)
-                }
-                items(
-                    items = extractResult.value!!.extractFrameImageUriList,
-                    key = { uri -> uri.toString() }
-                ) { imageUri ->
-                    AsyncImage(model = imageUri, contentDescription = null)
-                }
+        if (extractResult.value != null) {
+            item(span = { GridItemSpan(maxCurrentLineSpan) }, key = "output") {
+                ExtractResultUi(extractResult = extractResult.value!!)
+            }
+            items(
+                items = extractResult.value!!.extractFrameImageUriList,
+                key = { uri -> uri.toString() }
+            ) { imageUri ->
+                AsyncImage(model = imageUri, contentDescription = null)
             }
         }
     }

@@ -8,12 +8,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -80,29 +77,21 @@ fun BenchMarkScreen() {
         onResult = { uri -> startMediaMetadataRetrieverBenchMark(uri) }
     )
 
-    Scaffold(
-        topBar = {
-            TopAppBar(title = { Text(text = "BenchMarkScreen") })
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .padding(paddingValues)
-                .fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
 
-            Text(text = "VideoFrameBitmapExtractor かかった時間 = ${totalTimeVideoFrameBitmapExtractor.value} ms")
-            Text(text = "MediaMetadataRetriever かかった時間 = ${totalTimeMetadataRetriever.value} ms")
+        Text(text = "VideoFrameBitmapExtractor かかった時間 = ${totalTimeVideoFrameBitmapExtractor.value} ms")
+        Text(text = "MediaMetadataRetriever かかった時間 = ${totalTimeMetadataRetriever.value} ms")
 
-            Button(onClick = {
-                videoPickerAndVideoFrameBitmapExtractor.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.VideoOnly))
-            }) { Text(text = "VideoFrameBitmapExtractor ベンチマーク") }
+        Button(onClick = {
+            videoPickerAndVideoFrameBitmapExtractor.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.VideoOnly))
+        }) { Text(text = "VideoFrameBitmapExtractor ベンチマーク") }
 
-            Button(onClick = {
-                videoPickerAndMediaMetadataRetriever.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.VideoOnly))
-            }) { Text(text = "MediaMetadataRetriever ベンチマーク") }
+        Button(onClick = {
+            videoPickerAndMediaMetadataRetriever.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.VideoOnly))
+        }) { Text(text = "MediaMetadataRetriever ベンチマーク") }
 
-        }
     }
 }
