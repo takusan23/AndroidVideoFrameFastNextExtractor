@@ -140,7 +140,8 @@ fun VideoFrameExtractAndSaveScreen() {
                         setDataSource(context, uri)
                         for (positionMs in videoFramePositionMsList) {
                             // フレームを取り出す
-                            val bitmap = getFrameAtTime(positionMs * 1_000)!!
+                            // 正確なフレームが欲しいので MediaMetadataRetriever.OPTION_CLOSEST
+                            val bitmap = getFrameAtTime(positionMs * 1_000, MediaMetadataRetriever.OPTION_CLOSEST)!!
                             // 写真フォルダに保存する
                             resultUriList += bitmap.saveToPictureFolder(
                                 relativePath = mediaStoreRelativePath,
