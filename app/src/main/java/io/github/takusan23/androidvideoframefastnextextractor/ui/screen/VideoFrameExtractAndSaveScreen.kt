@@ -88,7 +88,7 @@ fun VideoFrameExtractAndSaveScreen() {
             relativePath: String,
             name: String
         ): Uri = withContext(Dispatchers.IO) {
-            // 端末の写真フォルダにコピー
+            // 端末の写真フォルダに保存
             val contentValues = contentValuesOf(
                 MediaStore.MediaColumns.DISPLAY_NAME to name,
                 MediaStore.MediaColumns.MIME_TYPE to "image/png",
@@ -237,7 +237,7 @@ private fun ExtractConfigInputUi(
         Row {
             Text(
                 modifier = Modifier.weight(1f),
-                text = "自前の高速で動く VideoFrameBitmapExtractor を利用する。OFF の場合は MediaMetadataRetriever を利用します。"
+                text = "VideoFrameBitmapExtractor を利用する。OFF なら MediaMetadataRetriever"
             )
             Switch(
                 checked = extractConfig.isUseVideoFrameBitmapExtractor,
