@@ -98,11 +98,11 @@ class VideoFrameBitmapExtractor {
      * 指定位置の動画のフレームを取得して、[Bitmap]で返す
      *
      * @param seekToMs シーク位置
-     * @return Bitmap
+     * @return Bitmap。もうデータがない場合は null。
      */
     suspend fun getVideoFrameBitmap(
         seekToMs: Long
-    ): Bitmap = withContext(Dispatchers.Default) {
+    ): Bitmap? = withContext(Dispatchers.Default) {
         val videoFrameBitmap = when {
             // 現在の再生位置よりも戻る方向に（巻き戻し）した場合
             seekToMs < prevSeekToMs -> {
@@ -120,7 +120,9 @@ class VideoFrameBitmapExtractor {
             else -> {
                 // 巻き戻しでも無く、フレームを取り出す必要がある
                 awaitSeekToNextDecode(seekToMs)
-                getImageReaderBitmap()
+                // 巻き戻しでも無く、フレームを取り出す必要がある
+                val hasData = awaitSeekToNextDecode(seekToMs)
+                if (hasData) getImageReaderBitmap() else null
             }
         }
         prevSeekToMs = seekToMs
@@ -224,13 +226,19 @@ class VideoFrameBitmapExtractor {
      * これにより、キーフレームまで戻る必要がなくなり、連続してフレームを取得する場合は高速に取得できます。
      *
      * @param seekToMs シーク位置
+     * @return もうデータがない場合は false。データが有り[getImageReaderBitmap]が呼び出せる場合は true。
      */
     private suspend fun awaitSeekToNextDecode(
         seekToMs: Long
-    ) = withContext(Dispatchers.Default) {
+    ): Boolean = withContext(Dispatchers.Default) {
         val decodeMediaCodec = decodeMediaCodec!!
         val mediaExtractor = mediaExtractor!!
         val inputSurface = inputSurface!!
+
+        // advance() で false を返したことがある場合、もうデータがない。getSampleTime も -1 になる。
+        if (mediaExtractor.sampleTime == -1L) {
+            return@withContext false
+        }
 
         var isRunning = isActive
         val bufferInfo = MediaCodec.BufferInfo()
@@ -290,8 +298,11 @@ class VideoFrameBitmapExtractor {
                 }
             }
 
-            // 次に進める
-            mediaExtractor.advance()
+            // 次に進める。advance() が false の場合はもうデータがないので、break する。
+            val isEndOfFile = !mediaExtractor.advance()
+            if (isEndOfFile) {
+                break
+            }
 
             // 欲しいフレームが前回の呼び出しと連続していないときの処理
             // 例えば、前回の取得位置よりもさらに数秒以上先にシークした場合、指定位置になるまで待ってたら遅くなるので、数秒先にあるキーフレームまでシークする
@@ -305,6 +316,8 @@ class VideoFrameBitmapExtractor {
                 mediaExtractor.seekTo(seekToMs * 1000, MediaExtractor.SEEK_TO_PREVIOUS_SYNC)
             }
         }
+
+        return@withContext true
     }
 
     /** [imageReader]から[Bitmap]を取り出す */

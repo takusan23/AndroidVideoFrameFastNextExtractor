@@ -127,10 +127,12 @@ fun VideoFrameExtractAndSaveScreen() {
                             // フレームを取り出す
                             val bitmap = getVideoFrameBitmap(seekToMs = positionMs)
                             // 写真フォルダに保存する
-                            resultUriList += bitmap.saveToPictureFolder(
-                                relativePath = mediaStoreRelativePath,
-                                name = "VideoFrame_${positionMs}_ms.png"
-                            )
+                            if (bitmap != null) {
+                                resultUriList += bitmap.saveToPictureFolder(
+                                    relativePath = mediaStoreRelativePath,
+                                    name = "VideoFrame_${positionMs}_ms.png"
+                                )
+                            }
                         }
                         destroy()
                     }

@@ -41,7 +41,7 @@ fun VideoFrameBitmapExtractorScreen() {
             scope.launch {
                 videoFrameBitmapExtractor.prepareDecoder(context, uri)
                 currentPositionMs.value = 1000
-                bitmap.value = videoFrameBitmapExtractor.getVideoFrameBitmap(currentPositionMs.value).asImageBitmap()
+                bitmap.value = videoFrameBitmapExtractor.getVideoFrameBitmap(currentPositionMs.value)?.asImageBitmap()
             }
         }
     )
@@ -73,7 +73,7 @@ fun VideoFrameBitmapExtractorScreen() {
         Button(onClick = {
             scope.launch {
                 currentPositionMs.value += 16
-                bitmap.value = videoFrameBitmapExtractor.getVideoFrameBitmap(currentPositionMs.value).asImageBitmap()
+                bitmap.value = videoFrameBitmapExtractor.getVideoFrameBitmap(currentPositionMs.value)?.asImageBitmap()
             }
         }) { Text(text = "16ms 進める") }
 
