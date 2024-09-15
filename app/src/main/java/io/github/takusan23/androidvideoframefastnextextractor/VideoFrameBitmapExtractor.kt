@@ -249,7 +249,7 @@ class VideoFrameBitmapExtractor {
             // コンテナフォーマットからサンプルを取り出し、デコーダーに渡す
             // シークしないことで、連続してフレームを取得する場合にキーフレームまで戻る必要がなくなり、早くなる
             val inputBufferIndex = decodeMediaCodec.dequeueInputBuffer(TIMEOUT_US)
-            if (inputBufferIndex >= 0) {
+            if (0 <= inputBufferIndex) {
                 // デコーダーへ流す
                 val inputBuffer = decodeMediaCodec.getInputBuffer(inputBufferIndex)!!
                 val size = mediaExtractor.readSampleData(inputBuffer, 0)
@@ -298,10 +298,13 @@ class VideoFrameBitmapExtractor {
                 }
             }
 
-            // 次に進める。advance() が false の場合はもうデータがないので、break する。
-            val isEndOfFile = !mediaExtractor.advance()
-            if (isEndOfFile) {
-                break
+            // 次に進める。デコーダーにデータを入れた事を確認してから。
+            // advance() が false の場合はもうデータがないので、break する。
+            if (0 <= inputBufferIndex) {
+                val isEndOfFile = !mediaExtractor.advance()
+                if (isEndOfFile) {
+                    break
+                }
             }
 
             // 欲しいフレームが前回の呼び出しと連続していないときの処理
@@ -336,7 +339,7 @@ class VideoFrameBitmapExtractor {
 
     companion object {
         /** MediaCodec タイムアウト */
-        private const val TIMEOUT_US = 10_000L
+        private const val TIMEOUT_US = 0L
 
         /** OpenGL 用に用意した描画用スレッド。Kotlin coroutines では Dispatcher を切り替えて使う */
         @OptIn(DelicateCoroutinesApi::class)
