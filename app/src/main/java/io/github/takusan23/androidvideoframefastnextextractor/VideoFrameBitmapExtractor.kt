@@ -210,6 +210,7 @@ class VideoFrameBitmapExtractor {
                         val presentationTimeMs = bufferInfo.presentationTimeUs / 1000
                         if (seekToMs <= presentationTimeMs) {
                             isRunning = false
+                            isDecoderOutputAvailable = false
                             latestDecodePositionMs = presentationTimeMs
                         }
                     }
@@ -292,6 +293,7 @@ class VideoFrameBitmapExtractor {
                         val presentationTimeMs = bufferInfo.presentationTimeUs / 1000
                         if (seekToMs <= presentationTimeMs) {
                             isRunning = false
+                            isDecoderOutputAvailable = false
                             latestDecodePositionMs = presentationTimeMs
                         }
                     }
